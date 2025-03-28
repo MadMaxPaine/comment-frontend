@@ -16,6 +16,9 @@ Here’s the structure focusing only on **Frontend Features**:
 | Error Handling                        | Completed          |
 | Responsive Design (CSS)               | Completed          |
 | Connect back-end                      | Completed          |
+| Axios                                 | Completed          |
+| regexp-validation-prepare             | Completed          |
+| Connect parts of app  right           | Completed          |
 
 ---
 
@@ -35,6 +38,10 @@ Here’s the structure focusing only on **Frontend Features**:
 | Error Checking                        | Pending            |
 | Deployment (Frontend)                 | Pending            |
 | Write tree draw (Frontend)            | Pending            |
+| Webpack                               | Pending            |
+| Docker docker-compose                 | Pending            |
+| deploy                                | Pending            |
+| Documentation                         | Pending            |
 
 This focuses solely on the frontend features. Let me know if you need any adjustments or additional features listed!
 To set up a **frontend** for your React project using **Git**, follow these steps:
