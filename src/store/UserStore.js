@@ -63,14 +63,12 @@ export default class UserStore {
         // Збереження токенів у localStorage
         localStorage.setItem('token', res.data.accessToken);
         this.setIsAuth(true); // Оновлення статусу авторизації
+        console.log(res);
+        
         this.setUser(res.data.userDto); // Оновлення даних користувача
-      } else {
-        console.error("Missing data in response");
-        throw new Error("Missing data in response");
-      }
+      } 
     } catch (e) {
-      console.error('Registration failed:', e.response?.data?.message || e.message);
-      alert("Registration failed: " + (e.response?.data?.message || e.message)); // Оповіщення для користувача
+      console.error('Registration failed:', e.response?.data?.message || e.message);      
     }
   }
   
@@ -112,4 +110,5 @@ export default class UserStore {
       this.setLoading(false);
     }
   }
+  
 }

@@ -7,7 +7,6 @@ export const registration = async function (regData) {
   const { data } = await $host.post("api/user/registration", regData);
   return data;
 };
-
 export const logout = async function () {
   return $authhost.post("api/user/logout");
 };

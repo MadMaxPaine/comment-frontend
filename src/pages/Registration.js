@@ -52,17 +52,20 @@ const Registration = observer(() => {
     reader.readAsDataURL(files[0]);
   };
   const getCropData = () => {
-    if (cropper && cropper.getCroppedCanvas) {
+    if (cropper) {
       const canvas = cropper.getCroppedCanvas({ width: 150, height: 150 });
+
       if (canvas) {
-        setCropData(canvas.toDataURL("image/png"));
+        const croppedImageDataUrl = canvas.toDataURL("image/png");
+        setCropData(croppedImageDataUrl); // Зберігаємо обрізане зображення
+        console.log("Cropped image:", croppedImageDataUrl); // Вивести в консоль обрізане зображення
       } else {
         console.error("Failed to get canvas from cropper");
       }
     } else {
-      console.error("Cropper is not initialized or invalid");
+      console.error("Cropper is not initialized yet.");
     }
-    setOpen(false);
+    setOpen(false); // Закриття UI елемента
   };
 
   const handleOpen = () => {
@@ -141,32 +144,57 @@ const Registration = observer(() => {
                 <TextField
                   sx={{ mt: 1 }}
                   size="small"
-                  helperText="Please enter you're name"
                   id="userName"
+                  inputProps={{
+                    pattern: "^[a-zA-Z0-9]+$",
+                    title: "Allowed only latin letters and numbers",
+                  }}
+                  error={!!userName && !/^[a-zA-Z0-9]+$/.test(userName)}
+                  helperText={
+                    userName && !/^[a-zA-Z0-9]+$/.test(userName)
+                      ? "Allowed only latin letters and numbers"
+                      : ""
+                  }
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
                   placeholder={"Name"}
                   label="Name"
+                  required
                 />
                 <Grid>
                   <TextField
                     fullWidth
                     sx={{ mt: 1 }}
                     size="small"
-                    helperText="Please enter you're e-mail"
-                    id="deviceName"
+                    error={!!email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
+                    helperText={
+                      email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                        ? "Incorrect format for email"
+                        : ""
+                    }
+                    id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={"Enter you're email address..."}
                     label="E-mail"
+                    required
                   />
                 </Grid>
 
                 <TextField
                   sx={{ mt: 1 }}
                   size="small"
-                  helperText="Please enter you're homepage"
-                  id="gender"
+                  error={
+                    !!homePage &&
+                    !/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(homePage)
+                  } // Валідація URL
+                  helperText={
+                    homePage &&
+                    !/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(homePage)
+                      ? "Incorrect format for URL"
+                      : ""
+                  }
+                  id="homepage"
                   value={homePage}
                   onChange={(e) => setHomePage(e.target.value)}
                   placeholder={"Homepage"}
@@ -178,23 +206,23 @@ const Registration = observer(() => {
           {step === 2 && (
             <>
               <form>
-                <input
-                  type="text"
-                  name="username"
-                  style={{ display: "none" }}
-                  aria-hidden="true"
-                  autoComplete="username"
-                />
                 <Stack
-                  direction="column"                  
+                  direction="column"
                   sx={{
                     display: "flex",
-                    alignItems: "center", // використовуйте 'alignItems' замість 'itemsAlign'
+                    alignItems: "center",
                     justifyContent: "center",
                     mt: 1,
                   }}
                 >
-                  
+                  {/* Hidden username field for accessibility */}
+                  <input
+                    type="text"
+                    style={{ display: "none" }}
+                    name="username"
+                    aria-hidden="true"
+                    autoComplete="username"
+                  />
                   <Grid>
                     <TextField
                       fullWidth
@@ -203,20 +231,26 @@ const Registration = observer(() => {
                       helperText="Please enter your password"
                       id="password"
                       value={password}
+                      error={password ==""} 
                       onChange={(e) => setPassword(e.target.value)}
                       type="password"
                       label="Password"
                       placeholder="Enter your password..."
                       autoComplete="new-password" // Додано autoComplete
+                      required
                     />
                   </Grid>
-
                   <Grid>
                     <TextField
                       fullWidth
                       sx={{ mt: 1 }}
                       size="small"
-                      helperText="Please confirm your password"
+                      helperText={
+                        password !== passwordConfirm
+                          ? "Passwords do not match"
+                          : "Please confirm your password"
+                      }
+                      error={password !== passwordConfirm} // Помилка, якщо паролі не співпадають
                       id="confirmPassword"
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
@@ -224,6 +258,7 @@ const Registration = observer(() => {
                       label="Confirm password"
                       placeholder="Enter your password again..."
                       autoComplete="new-password" // Додано autoComplete
+                      required
                     />
                   </Grid>
                 </Stack>

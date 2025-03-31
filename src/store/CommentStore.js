@@ -1,11 +1,14 @@
-import { makeAutoObservable } from "mobx";
-import { comments as getComments, addComment as postComment } from "../http/commentAPI"; // додаємо addComment
+import { makeAutoObservable, runInAction } from "mobx";
+import { comments, addComment } from "../http/commentAPI";
 
 export default class CommentStore {
   constructor() {
     this._comments = [];
     this._isLoading = false;
-    this._error = null; // додамо для зберігання помилок
+    this._error = null;
+    this._page = 1;
+    this._pageSize = 25;
+    this._totalPages = 1;
     makeAutoObservable(this);
   }
 
@@ -21,6 +24,14 @@ export default class CommentStore {
     this._error = error;
   }
 
+  setPage(page) {
+    this._page = page;
+  }
+
+  setTotalPages(total) {
+    this._totalPages = total;
+  }
+
   get comments() {
     return this._comments;
   }
@@ -33,30 +44,78 @@ export default class CommentStore {
     return this._error;
   }
 
-  // Функція для отримання всіх коментарів
-  async fetchComments() {
+  get page() {
+    return this._page;
+  }
+
+  get pageSize() {
+    return this._pageSize;
+  }
+
+  get totalPages() {
+    return this._totalPages;
+  }
+
+  async fetchComments(page = this._page,sortBy = "createdAt", sortOrder = "asc") {
     this.setLoading(true);
-    this.setError(null); // очищуємо помилки
-    try {
-      const data = await getComments();
-      this.setComments(data);
+    console.log("Fetching comments with:", { page, sortBy, sortOrder }); // Дебаг лог
+    try {      
+      // Використовуємо axios для запиту
+      const data = await comments({page, sortBy, sortOrder});
+      //console.log(sortBy, sortOrder);
+      console.log('Sort by:', sortBy, 'Order:', sortOrder);
+      //console.log(data);
+      // Перевіряємо, чи є в відповіді дані
+      if (data && data.comments) {
+        // Перевіряємо, чи є властивість comments і чи це масив
+        if (Array.isArray(data.comments)) {
+          runInAction(() => {
+            this.setComments(data.comments); // встановлюємо отримані коментарі
+            this.setTotalPages(data.totalPages); // встановлюємо кількість сторінок
+          });
+        } else {
+          runInAction(() => {
+            this.setComments([]); // Якщо коментарі не є масивом, очищаємо їх
+          });
+        }
+      } else {
+        runInAction(() => {
+          this.setComments([]); // Очистити коментарі, якщо їх немає
+        });
+      }
     } catch (e) {
-      console.error("Error fetching comments:", e.response?.data?.message || e.message);
-      this.setError("Не вдалося отримати коментарі.");
+      console.error("Помилка при завантаженні коментарів:", e);
+      runInAction(() => {
+        this.setError("Помилка завантаження коментарів");
+      });
     } finally {
-      this.setLoading(false);
+      runInAction(() => {
+        this.setLoading(false);
+        console.log("Завершення завантаження коментарів");
+      });
     }
   }
 
-  // Функція для додавання коментаря
+  // Оновлений метод для зміни сторінки та завантаження нових коментарів
+  changePage(page) {
+    if (page < 1 || page > this.totalPages) return;
+    this.setPage(page);
+    this.fetchComments(page);
+  }
+
   async addComment(commentData) {
     this.setLoading(true);
-    this.setError(null); // очищуємо помилки
+    this.setError(null);
     try {
-      const newComment = await postComment(commentData); // викликаємо API для додавання
-      this._comments.push(newComment); // додаємо новий коментар в список
+      const newComment = await addComment(commentData);
+      runInAction(() => {
+        this._comments.push(newComment);
+      });
     } catch (e) {
-      console.error("Error adding comment:", e.response?.data?.message || e.message);
+      console.error(
+        "Error adding comment:",
+        e.response?.data?.message || e.message
+      );
       this.setError("Не вдалося додати коментар.");
     } finally {
       this.setLoading(false);
