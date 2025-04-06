@@ -21,7 +21,7 @@ const NavBar = observer(() => {
   const { user } = useContext(ctx);  
   const { toggleTheme, theme } = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
-  const handleMenu = (event) => {
+  const handleMenu = (event) => {    
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
@@ -72,7 +72,7 @@ const NavBar = observer(() => {
                         alt={user._user.userName || "User Avatar"}
                         src={
                           user._user.avatar
-                            ? `${REACT_APP_API_URL}/${user._user.avatar}`
+                            ? `${REACT_APP_API_URL}uploads/avatars/${user._user.avatar}`
                             : ""
                         }
                       />

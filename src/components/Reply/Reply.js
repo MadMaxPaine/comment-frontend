@@ -4,7 +4,7 @@ import FileUploadWithPreview from "./FileUploadWithPreview";
 import TextEditorWithTags from "./TextEditorWithTags";
 import { validateXHTML } from "../../utils/xhtmlValidator";
 import { ctx } from "../../store/Context";
-
+import Captcha from "../Catpcha/Catpcha";
 //import CommentStore from "../../store/CommentStore";
 
 const Reply = ({ parentId, onAddReply }) => {
@@ -15,11 +15,20 @@ const Reply = ({ parentId, onAddReply }) => {
   const [email, setEmail] = useState("");
   const [homePage, setHomePage] = useState("");
   const [error, setError] = useState("");
-  const [file, setFile] = useState(null); // Стан для збереження файлу
+  const [file, setFile] = useState(null);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false); // Стан CAPTCHA
+  const [captchaKey, setCaptchaKey] = useState(Date.now());
 
-  // Функція, що буде викликатися з дочірньої компоненти
+  const handleSuccess = () => {
+    setIsCaptchaVerified(true);
+  };
+  const refreshCaptcha = () => {
+    setIsCaptchaVerified(false);
+    setCaptchaKey(Date.now()); // Використовуємо зміну ключа, щоб перерендерити компонент CAPTCHA
+  };
+
   const handleFileChange = (uploadedFile) => {
-    setFile(uploadedFile); // Оновлення стану файлу
+    setFile(uploadedFile);
     console.log("Received file from child:", uploadedFile);
   };
   const handleTextChange = (newText) => {
@@ -28,52 +37,62 @@ const Reply = ({ parentId, onAddReply }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isCaptchaVerified) {
+      setError("CAPTCHA не пройдена.");
+      return;
+    }
+
     if (!user._isAuth) {
-      // Перевіряємо, чи заповнені обов'язкові поля
       if (!replyText.trim() || !userName.trim() || !email.trim()) {
         setError("Всі обов'язкові поля є необхідними.");
         return;
       }
 
-      // Перевірка на коректність email
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setError("Некоректний формат email.");
         return;
       }
 
-      // Перевірка на коректність URL (якщо він введений)
       if (homePage && !/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(homePage)) {
         setError("Некоректний формат URL.");
         return;
       }
     }
-    // Перевірка на правильність XHTML
+
     const validationResult = validateXHTML(replyText);
     if (validationResult !== "Valid XHTML") {
       setError(validationResult);
       return;
     }
 
-    //console.log(file);
-    // Формуємо об'єкт коментаря
-    const commentData = {
-      text: replyText,
-      username: user._isAuth ? user._name : userName,
-      email: user._isAuth ? user._user.mail : email,
-      homepage: user._isAuth ? user._user.homepage : homePage ? homePage : null, // якщо є
-      file: file || null, // якщо є файл
-    };
-
+    const formData = new FormData();
+    if (parentId !== null && parentId !== undefined) {
+      formData.append("parentId", parentId);
+    }
+    formData.append("text", replyText);
+    formData.append("username", user._isAuth ? user._name : userName);
+    formData.append("email", user._isAuth ? user._user.mail : email);
+    formData.append("homepage", user._isAuth ? user._user.homepage : homePage || "");
+    formData.append("file", file || null);
+     
+    // Перевірка наявності файлу в formData
+    //console.log("FormData contents:", formData);
+    // Відправка запиту з formData
     try {
-      console.log(commentData);
-      await comment.addComment(commentData); // Викликаємо store
-
+      const response = await comment.addComment(formData); // Використовуємо метод для відправки
+      console.log("Response from server:", response);
+    } catch (error) {
+      console.error("Error uploading comment:", error);
+    }
+    try {
+      await comment.addComment(formData);
       setReplyText("");
       setUserName("");
       setEmail("");
       setHomePage("");
       setFile(null);
       setError("");
+      refreshCaptcha();
     } catch (error) {
       setError("Помилка при відправці коментаря." + error);
     }
@@ -83,22 +102,16 @@ const Reply = ({ parentId, onAddReply }) => {
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ m: 0.5, /* width: "700px",*/ height: "auto" }}
+      sx={{ m: 0.5, height: "auto" }}
     >
-      <Box
-        sx={{
-          m: 0.5,
-          display: "flex", // Встановлюємо контейнер як flexbox
-          justifyContent: "space-between",
-        }}
-      >
+      <Box sx={{ m: 0.5, display: "flex", justifyContent: "space-between" }}>
         {!user._isAuth && (
           <>
             <TextField
               id="userName"
               name="userName"
               label="UserName"
-              variant="outlined"
+              variant="standard"
               required
               inputProps={{
                 pattern: "^[a-zA-Z0-9]+$",
@@ -113,13 +126,13 @@ const Reply = ({ parentId, onAddReply }) => {
               value={userName}
               autoComplete="username"
               onChange={(e) => setUserName(e.target.value)}
-              sx={{ mt: 2, mb: 0.5, flexBasis: "32%" }}
+              sx={{ mt: 1, mb: 0.5, flexBasis: "32%" }}
             />
             <TextField
               id="email"
               name="email"
               label="E-mail"
-              variant="outlined"
+              variant="standard"
               required
               error={!!email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
               helperText={
@@ -130,17 +143,17 @@ const Reply = ({ parentId, onAddReply }) => {
               value={email}
               autoComplete="email"
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ mt: 2, mb: 0.5, flexBasis: "32%" }}
+              sx={{ mt: 1, mb: 0.5, flexBasis: "32%" }}
             />
             <TextField
               id="homePage"
               name="homePage"
               label="HomePage"
-              variant="outlined"
+              variant="standard"
               error={
                 !!homePage &&
                 !/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(homePage)
-              } // Валідація URL
+              }
               helperText={
                 homePage &&
                 !/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i.test(homePage)
@@ -150,53 +163,47 @@ const Reply = ({ parentId, onAddReply }) => {
               value={homePage}
               autoComplete="url"
               onChange={(e) => setHomePage(e.target.value)}
-              sx={{ mt: 2, mb: 0.5, flexBasis: "32%" }}
+              sx={{ mt: 1, mb: 0.5, flexBasis: "32%" }}
             />
           </>
         )}
       </Box>
-      <div>
-        {/* Передаємо onFileUpload як пропс в дочірню компоненту */}
-        <FileUploadWithPreview onFileUpload={handleFileChange} />
-        {file && <div>File uploaded: {file.name}</div>}
-      </div>
-      {/* Передаємо функцію handleTextChange і replyText в TextEditorWithTags */}
-      <TextEditorWithTags text={replyText} onTextChange={handleTextChange} />
+      <FileUploadWithPreview onFileUpload={handleFileChange} />
+      {file && (
+        <div>
+          File uploaded: {file instanceof File ? file.name : "Resized image"}
+        </div>
+      )}
 
+      <TextEditorWithTags text={replyText} onTextChange={handleTextChange} />
       <TextField
-        sx={{ m: 0.5, mt: 2, display: "flex" }}
+        sx={{ m: 0.5, mt: 1, display: "flex" }}
         id="replyText"
         name="replyText"
         label="Text"
         autoComplete="off"
         multiline
         required
-        rows={4}
+        rows={3}
         variant="outlined"
+        size="small"
         value={replyText}
         onChange={(e) => handleTextChange(e.target.value)}
       />
-
-      {/* Виводимо помилку, якщо є */}
       {error && (
         <Typography variant="body2" color="error" sx={{ mt: 2 }}>
           {error}
         </Typography>
       )}
-      <Box
-        sx={{
-          m: 0.5,
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
+      <Captcha key={captchaKey} onSuccess={handleSuccess} />
+      <Box sx={{ m: 0.5, display: "flex", justifyContent: "flex-end" }}>
         <Button
           type="submit"
           variant="contained"
           color="primary"
-          sx={{
-            m: 0.5,
-          }}
+          size="small"
+          sx={{ m: 0.5 }}
+          disabled={!isCaptchaVerified}
         >
           Comment
         </Button>

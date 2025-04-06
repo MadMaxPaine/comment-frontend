@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import Cropper from "react-cropper";
 import "cropperjs/src/css/cropper.css";
 import "../styles/cropper-avatar-shaper.css";
@@ -25,6 +25,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { useNavigate } from "react-router-dom";
 import { COMMENTS_ROUTE } from "../utils/consts";
 import { observer } from "mobx-react-lite";
+
 const Registration = observer(() => {
   const { user } = useContext(ctx);
   const history = useNavigate();
@@ -35,38 +36,104 @@ const Registration = observer(() => {
   const [homePage, setHomePage] = useState("");
   const [step, setStep] = useState(1);
   const [open, setOpen] = React.useState(false);
+  const cropperRef = useRef(null);
   const [cropData, setCropData] = useState(null);
-  const [cropper, setCropper] = useState(null);
+  //const [cropper, setCropper] = useState(null);
+  const [image, setImage] = useState(null); // <-- Сюди йде FileReader result
+
+  // Стани для перевірки завершення кроків
+  const [isStep1Complete, setIsStep1Complete] = useState(false);
+  const [isStep2Complete, setIsStep2Complete] = useState(false);
+  const [isStep3Complete, setIsStep3Complete] = useState(false);
+  // Валідація кроку 1
+  useEffect(() => {
+    if (
+      userName &&
+      email &&
+      /^[a-zA-Z0-9]+$/.test(userName) &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      setIsStep1Complete(true);
+    } else {
+      setIsStep1Complete(false);
+    }
+  }, [userName, email]);
+  // Валідація кроку 2
+  useEffect(() => {
+    if (password && passwordConfirm && password === passwordConfirm) {
+      setIsStep2Complete(true);
+    } else {
+      setIsStep2Complete(false);
+    }
+  }, [password, passwordConfirm]);
+  // Валідація кроку 3
+  useEffect(() => {
+    if (cropData) {
+      setIsStep3Complete(true);
+    } else {
+      setIsStep3Complete(false);
+    }
+  }, [cropData]);
+
+  // Функція для переходу на наступний крок
+  function goNextStep() {
+    if (step === 1 && isStep1Complete) {
+      setStep(step + 1);
+    } else if (step === 2 && isStep2Complete) {
+      setStep(step + 1);
+    } else if (step === 3 && isStep3Complete) {
+      setStep(step + 1);
+    } else {
+      alert("Please complete the current step before proceeding.");
+    }
+  }
+  // Функція для повернення на попередній крок
+  function goPrevStep() {
+    setStep(step - 1);
+  }
   const onChange = (e) => {
     e.preventDefault();
-    let files;
-    if (e.dataTransfer) {
-      files = e.dataTransfer.files;
-    } else if (e.target) {
-      files = e.target.files;
+    const files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
+    if (files && files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImage(reader.result); // base64 string
+      };
+      reader.readAsDataURL(files[0]);
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropData(reader.result);
-    };
-    reader.readAsDataURL(files[0]);
   };
-  const getCropData = () => {
-    if (cropper) {
-      const canvas = cropper.getCroppedCanvas({ width: 150, height: 150 });
 
-      if (canvas) {
-        const croppedImageDataUrl = canvas.toDataURL("image/png");
-        setCropData(croppedImageDataUrl); // Зберігаємо обрізане зображення
-        console.log("Cropped image:", croppedImageDataUrl); // Вивести в консоль обрізане зображення
-      } else {
-        console.error("Failed to get canvas from cropper");
-      }
-    } else {
+  const getCropData = () => {   
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) {
       console.error("Cropper is not initialized yet.");
+      return;
     }
-    setOpen(false); // Закриття UI елемента
+  
+    if (!image) {
+      console.error("No image loaded for cropping.");
+      return;
+    }
+    
+    const canvas = cropper.getCroppedCanvas({ width: 150, height: 150 });
+    
+    if (!canvas) {
+      console.error("Failed to get cropped canvas.");
+      return;
+    }
+  
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        console.error("Failed to convert canvas to blob.");
+        return;
+      }
+  
+      const file = new File([blob], "avatar.png", { type: "image/png" });
+      setCropData(file);
+      setOpen(false); // Закриваємо діалог після обрізки
+    }, "image/png");
   };
+  
 
   const handleOpen = () => {
     setOpen(true);
@@ -76,12 +143,14 @@ const Registration = observer(() => {
     setCropData(null);
     setOpen(false);
   };
+  /*
   function goNextStep() {
     setStep((step) => (+step < 4 ? step + 1 : 1));
   }
   function goPrevStep() {
     setStep((step) => (+step > 1 ? step - 1 : 1));
   }
+    */
   const registrate = () => {
     if (password !== passwordConfirm) {
       alert("Passwords do not match!");
@@ -231,7 +300,7 @@ const Registration = observer(() => {
                       helperText="Please enter your password"
                       id="password"
                       value={password}
-                      error={password ==""} 
+                      error={password === ""}
                       onChange={(e) => setPassword(e.target.value)}
                       type="password"
                       label="Password"
@@ -295,7 +364,7 @@ const Registration = observer(() => {
                   Select
                 </Button>
               </Grid>
-              {cropData !== null && open === false && (
+              {image !== null && open === false && (
                 <Grid
                   sx={{
                     display: "flex",
@@ -306,7 +375,7 @@ const Registration = observer(() => {
                 >
                   <Avatar
                     alt="cropped"
-                    src={cropData}
+                    src={image}
                     sx={{ width: 150, height: 150 }}
                   />
                 </Grid>
@@ -352,19 +421,22 @@ const Registration = observer(() => {
                         aspectRatio={1}
                         initialAspectRatio={1}
                         preview=""
-                        src={cropData}
+                        src={image} // <-- саме image, не cropData
                         viewMode={1}
-                        minCropBoxHeight={"100"}
-                        minCropBoxWidth={"100"}
+                        minCropBoxHeight={100}
+                        minCropBoxWidth={100}
                         background={false}
                         responsive={false}
                         autoCropArea={0}
                         dragMode="crop"
+                        ref={cropperRef}
                         checkOrientation={false}
                         onInitialized={(instance) => {
-                          setCropper(instance);
+                          console.log(instance);
+                          
+                          //setCropper(instance);
                         }}
-                        guides={true}
+                        guides={true}                        
                       />
                     </Grid>
                   </Grid>

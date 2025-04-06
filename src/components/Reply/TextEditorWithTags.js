@@ -20,7 +20,7 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
 
   return (
     <Box sx={{ m: 0.5 }}>
-      <Box sx={{ m: 0.5 }}>
+      <Box>
         <Button
           variant="contained"
           onClick={() => addTag("i")}
@@ -70,6 +70,7 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
         <Button
           variant="contained"
           onClick={() => addTag("a")}
+          
           sx={{
             bgcolor: "#673ab7",
             borderTopLeftRadius: 0,

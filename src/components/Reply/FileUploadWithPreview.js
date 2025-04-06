@@ -12,72 +12,80 @@ const FileUploadWithPreview = ({ onFileUpload }) => {
     return new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
-
+  
       reader.onload = (e) => {
         img.src = e.target.result;
       };
-
+  
       reader.readAsDataURL(file);
-
+  
       img.onload = () => {
+        // Перевірка розміру
+        if (img.width <= 320 && img.height <= 240) {
+          // Якщо зображення вже менше або дорівнює — повертаємо оригінальний файл
+          resolve(file);
+          return;
+        }
+  
+        // Масштабування
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
-
+  
         const width = 320;
         const height = 240;
         canvas.width = width;
         canvas.height = height;
-
+  
         ctx.drawImage(img, 0, 0, width, height);
         canvas.toBlob((blob) => resolve(blob), file.type);
       };
     });
   };
+  
 
   // Обробка зміни файлу
   const handleFileChange = async (event) => {
     const selectedFile = event.target.files[0];
-
-    if (!selectedFile) return;    
-
+    if (!selectedFile) return;
+  
     const fileType = selectedFile.type;
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "text/plain"];
-
-    // Перевірка типу файлу
+  
     if (!allowedTypes.includes(fileType)) {
       setError("Allowed formats: JPG, PNG, GIF, or TXT.");
       resetFile();
       return;
     }
-    // Перевірка розміру файлу
-    if ((selectedFile.size > 100 * 1024)&&(fileType === "text/plain")) {
+  
+    if (fileType === "text/plain" && selectedFile.size > 100 * 1024) {
       setError("Exceeds limit of 100 Kb.");
       resetFile();
       return;
     }
-
-    // Обробка файлу залежно від типу
-    if (["image/jpeg", "image/png", "image/gif"].includes(fileType)) {
-      setError("");
-      setFile(selectedFile);
-      setFileContent("");
-      const objectUrl = URL.createObjectURL(selectedFile);
-      setFileUrl(objectUrl);
-
+  
+    setError("");
+    setFile(selectedFile);
+    setFileContent("");
+  
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setFileUrl(fileType !== "text/plain" ? objectUrl : null);
+  
+    if (fileType === "image/jpeg" || fileType === "image/png") {
+      // Масштабуємо PNG/JPEG
       const resizedImage = await resizeImage(selectedFile);
       onFileUpload(resizedImage);
-      // Надіслати resizedImage на сервер при необхідності
+    } else if (fileType === "image/gif") {
+      // Не чіпаємо GIF — зберігаємо анімацію
+      onFileUpload(selectedFile);
     } else if (fileType === "text/plain") {
-      setError("");
-      setFile(selectedFile);
-      setFileUrl(null);
-
+      // Читаємо текстовий файл
       const reader = new FileReader();
-      reader.onload = (e) =>setFileContent(e.target.result);
+      reader.onload = (e) => setFileContent(e.target.result);
       reader.readAsText(selectedFile);
-      onFileUpload(selectedFile); 
+      onFileUpload(selectedFile);
     }
   };
+  
 
   // Очищення файлів і помилок
   const resetFile = () => {
@@ -111,7 +119,7 @@ const FileUploadWithPreview = ({ onFileUpload }) => {
         onChange={handleFileChange}
       />
       <label htmlFor="file-upload">
-        <Button sx={{ m: 0.5 }} variant="contained" component="span">
+        <Button sx={{ m: 0}} variant="contained" size="small" component="span">
           Select File
         </Button>
       </label>
@@ -119,6 +127,7 @@ const FileUploadWithPreview = ({ onFileUpload }) => {
       {file && (
         <Button
           variant="outlined"
+          size="small"
           color="error"
           onClick={handleRemoveFile}
           sx={{ m: 0.5 }}
