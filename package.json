@@ -13,25 +13,27 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
     "cropperjs": "^1.6.2",
+    "dompurify": "^3.2.5",
     "lodash": "^4.17.21",
+    "marked": "^15.0.11",
     "mobx": "^6.13.7",
     "mobx-react-lite": "^4.1.0",
-    "react": "^19.0.0",
+    "react": "^18.0.0",
     "react-avatar-editor": "^13.0.2",
     "react-bootstrap": "^2.10.9",
     "react-cropper": "^2.3.3",
-    "react-dom": "^19.0.0",
+    "react-dom": "^18.0.0",
     "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^7.4.0",
     "react-scripts": "5.0.1",
+    "react-transition-group": "^4.4.5",
     "react-virtualized": "^9.22.6",
+    "socket.io-client": "^4.8.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "webpack serve",
+    "build": "webpack"
   },
   "eslintConfig": {
     "extends": [
@@ -50,5 +52,17 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.1",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "babel-loader": "^10.0.0",
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.8",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
   }
 }
