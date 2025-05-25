@@ -19,26 +19,22 @@ Here’s the structure focusing only on **Frontend Features**:
 | Axios                                 | Completed          |
 | regexp-validation-prepare             | Completed          |
 | Connect parts of app  right           | Completed          |
-
+| Socket Integration                    | Completed          |
+| Comment System (UI for Comments)      | Completed          |
+| Sorting                               | Completed          |
+| Pagination                            | Completed          |
+| Webpack                               | Completed          |
+| Error Checking                        | Completed          |
 ---
 
 ### **Frontend - What's Left to Do:**
 
 | **Feature**                           | **Status**         |
 |---------------------------------------|--------------------|
-| Socket Integration                    | Pending            |
-| Comment System (UI for Comments)      | Pending            |
-| Sorting                               | Pending            |
-| Pagination                            | Pending            |
-| Stack (Clarify Technology Stack)      | Clarify Stack      |
-| Events (React Event Handlers)         | Pending            |
 | Performance Optimization Lazy Loading | Pending            |
 | Testing (End-to-End Tests)            | Pending            |
 | Code Cleaning                         | Pending            |
-| Error Checking                        | Pending            |
 | Deployment (Frontend)                 | Pending            |
-| Write tree draw (Frontend)            | Pending            |
-| Webpack                               | Pending            |
 | Docker docker-compose                 | Pending            |
 | deploy                                | Pending            |
 | Documentation                         | Pending            |
