@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Box, Typography, TextField } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { REACT_APP_API_URL } from "../../utils/consts";
 
 const Captcha = ({ onSuccess }) => {
   const [captchaUrl, setCaptchaUrl] = useState("");
@@ -9,13 +10,23 @@ const Captcha = ({ onSuccess }) => {
   const [timeLeft, setTimeLeft] = useState(60);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
   const [canReload, setCanReload] = useState(false); // Додано для контролю кнопки Reload
+  const [captchaId, setCaptchaId] = useState(null);
+  const reloadCaptcha = async () => {
+    const response = await fetch(`${REACT_APP_API_URL}api/captcha`, {
+      credentials: "include",
+    });
+    const blob = await response.blob();
 
-  const reloadCaptcha = () => {
-    setCaptchaUrl(`http://localhost:5000/captcha?${Date.now()}`);
+    const newCaptchaId = response.headers.get("x-captcha-id"); // <-- Отримали унікальний ID
+
+    setCaptchaId(newCaptchaId);
+
+    const objectUrl = URL.createObjectURL(blob);
+    setCaptchaUrl(objectUrl);
     setIsCaptchaVerified(false);
     setMessage("");
-    setTimeLeft(60); // Скидаємо таймер при перезавантаженні капчі
-    setCanReload(false); // Кнопка неактивна
+    setTimeLeft(60);
+    setCanReload(false);
   };
 
   useEffect(() => {
@@ -40,10 +51,10 @@ const Captcha = ({ onSuccess }) => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch("http://localhost:5000/submit", {
+      const response = await fetch(`${REACT_APP_API_URL}api/captcha/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ captchaInput }),
+        body: JSON.stringify({ captchaInput, captchaId }),
         credentials: "include",
       });
 
@@ -52,7 +63,7 @@ const Captcha = ({ onSuccess }) => {
 
       if (text === "✅ Captcha correct!") {
         setIsCaptchaVerified(true);
-        onSuccess();
+        onSuccess(captchaId, captchaInput);
       } else {
         //reloadCaptcha();
       }
@@ -70,11 +81,11 @@ const Captcha = ({ onSuccess }) => {
         <Box
           sx={{
             display: "flex",
-            mt: 1,
+            flexDirection: "column",
             m: 0.5,
-            justifyContent: "left",
-            alignItems: "center",
-            marginBottom: 2,
+            p: 0.5,
+            width: "fit-content", // важливо!
+            alignItems: "center", // контент по центру
           }}
         >
           <img
@@ -82,24 +93,38 @@ const Captcha = ({ onSuccess }) => {
             alt="CAPTCHA"
             style={{ width: "100%", maxWidth: 200 }} // Робимо зображення компактнішим
           />
+
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={reloadCaptcha}
+            startIcon={<RefreshIcon />}
+            fullWidth
+            sx={{
+              display: isCaptchaVerified ? "none" : "flex",
+              flexDirection: "row", // просто для впевненості
+              alignItems: "center", // вирівнювання по центру вертикалі
+              justifyContent: "center",
+              m: 0.5,
+              p: 0.5,
+              borderRadius: 0,
+              gap: 1, // невеликий відступ між іконкою і текстом
+            }}
+            disabled={!canReload} // Кнопка буде неактивною поки не закінчиться таймер
+          >
+            RELOAD
+          </Button>
           <Box>
-            <Button
-              variant="text"
-              onClick={reloadCaptcha}
-              size="small"
-              startIcon={<RefreshIcon />}
-              sx={{
-                display: isCaptchaVerified ? "none" : "block",
-                marginLeft: 0.5,
-              }}
-              disabled={!canReload} // Кнопка буде неактивною поки не закінчиться таймер
-            >
-              RELOAD
-            </Button>
+            {!isCaptchaVerified && timeLeft > 0 && (
+              <Typography variant="body2" sx={{ m: 0.5, p: 0.5 }}>
+                CAPTCHA update in {timeLeft} sec.
+              </Typography>
+            )}
           </Box>
         </Box>
       )}
-
       <TextField
         label={
           isCaptchaVerified ? "✅ CAPTCHA SUCCESS!" : message || "Enter CAPTCHA"
@@ -115,7 +140,6 @@ const Captcha = ({ onSuccess }) => {
         sx={{ mb: 1 }}
         disabled={isCaptchaVerified}
       />
-
       <Button
         variant="contained"
         size="small"
@@ -125,12 +149,6 @@ const Captcha = ({ onSuccess }) => {
       >
         Check
       </Button>
-
-      {!isCaptchaVerified && timeLeft > 0 && (
-        <Typography variant="body2" sx={{ marginTop: 2, m: 0.5 }}>
-          CAPTCHA update in {timeLeft} sec.
-        </Typography>
-      )}
     </Box>
   );
 };
