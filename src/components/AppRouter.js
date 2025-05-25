@@ -2,7 +2,7 @@ import React, { useContext } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { authRoutes, publicRoutes } from "../routes";
 import { COMMENTS_ROUTE } from "../utils/consts";
-import { ctx } from "../store/Context";
+import { ctx } from "../stores/Context";
 export const AppRouter = () => {
   const { user } = useContext(ctx); 
   return (
@@ -17,7 +17,7 @@ export const AppRouter = () => {
           <Route key={path} path={path} element={<Component />} />
         ))}
 
-        {/* Перенаправлення на магазин за замовчуванням */}
+        {/* Перенаправлення на коментарі за замовчуванням */}
         <Route path="*" element={<Navigate to={COMMENTS_ROUTE} />} />
       </Routes>
     </>
