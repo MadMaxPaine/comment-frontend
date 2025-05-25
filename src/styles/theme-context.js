@@ -1,38 +1,43 @@
-import React, { createContext, useContext, useState } from 'react';
-import { createTheme, ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import React, { createContext, useContext, useState, useMemo, useEffect } from "react";
+import { ThemeProvider as MuiThemeProvider, CssBaseline } from "@mui/material";
+import { lightTheme, darkTheme } from "./theme";
 
-// Створюємо контекст для теми
 const ThemeContext = createContext();
 
-const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-  },
-});
+export const ThemeProvider = ({ children }) => {
+  // Отримуємо збережену тему з localStorage, або за замовчуванням 'light'
+  const savedTheme = localStorage.getItem("theme");
+  const [theme, setTheme] = useState(savedTheme || "light");
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
-
-// Оновлюємо ThemeProvider для коректного використання forwardRef
-export const ThemeProvider = React.forwardRef(({ children }, ref) => {
-  const [theme, setTheme] = useState('light');
-
+  // Функція для перемикання теми
   const toggleTheme = () => {
-    setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme); // Зберігаємо вибрану тему в localStorage
   };
+
+  // Обчислюємо поточну тему
+  const currentTheme = useMemo(
+    () => (theme === "dark" ? darkTheme : lightTheme),
+    [theme]
+  );
+
+  useEffect(() => {
+    // Відновлюємо тему при першому завантаженні
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {/* Передаємо ref до MuiThemeProvider, щоб він підтримував реф */}
-      <MuiThemeProvider theme={theme === 'dark' ? darkTheme : lightTheme} ref={ref}>
+      <MuiThemeProvider theme={currentTheme}>
+        <CssBaseline />
         {children}
       </MuiThemeProvider>
     </ThemeContext.Provider>
   );
-});
+};
 
-// Хук для доступу до контексту теми
 export const useTheme = () => useContext(ThemeContext);

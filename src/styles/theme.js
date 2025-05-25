@@ -1,22 +1,27 @@
 import { createTheme } from "@mui/material/styles";
 
-// Світла тема
+// Світла тема з теплими фіолетовими
 export const lightTheme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#1976d2", // Синій
+      main: "#364F6B", // Темно-синій
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: "#9c27b0", // Фіолетовий
+      main: "#3FC1C9", // Бірюзовий
+      contrastText: "#ffffff",
+    },
+    error: {
+      main: "#FC5185", // Рожево-червоний
     },
     background: {
-      default: "#fafafa", // Світлий фон
-      paper: "#ffffff",   // Фон паперу
+      default: "#F5F5F5", // Світлий фон
+      paper: "#ffffff",
     },
     text: {
-      primary: "#000000", // Темний текст
-      secondary: "#757575", // Легкий текст
+      primary: "#1a1a1a",
+      secondary: "#5e5e5e",
     },
   },
   typography: {
@@ -37,38 +42,44 @@ export const lightTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: "8px", // Округлені кнопки
+          borderRadius: "8px",
           padding: "10px 20px",
+          textTransform: "none",
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "#1976d2", // Колір AppBar
+          backgroundColor: "#364F6B", // Такий самий як primary.main
+          color: "#ffffff",
         },
       },
     },
   },
 });
 
-// Темна тема
 export const darkTheme = createTheme({
   palette: {
     mode: "dark",
     primary: {
-      main: "#90caf9", // Світлий синій для темної теми
+      main: "#2E073F", // Темний фіолетовий
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: "#ff4081", // Рожевий
+      main: "#7A1CAC", // Яскравий пурпурний
+      contrastText: "#ffffff",
+    },
+    error: {
+      main: "#ff1744", // Насичений варіант для теми
     },
     background: {
-      default: "#121212", // Темний фон
-      paper: "#1e1e1e",   // Темний фон паперу
+      default: "#003161", // Темний фон (основний)
+      paper: "#1e1e1e",   // Трохи світліший для елементів (карток тощо)
     },
     text: {
-      primary: "#ffffff", // Білий текст
-      secondary: "#bdbdbd", // Світло-сірий текст
+      primary: "#EBD3F8", // Світло-фіолетовий для основного тексту
+      secondary: "#b0bec5", // Світло-сірий для другого тексту
     },
   },
   typography: {
@@ -89,17 +100,20 @@ export const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: "8px", // Округлені кнопки
+          borderRadius: "8px",
           padding: "10px 20px",
+          textTransform: "none",
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "#1e1e1e", // Темний колір AppBar
+          backgroundColor: "#2E073F", // Гармонійний з темним фоном
+          color: "#ffffff",
         },
       },
     },
   },
 });
+
