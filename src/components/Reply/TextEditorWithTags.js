@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Box} from "@mui/material";
+import { Button, Box } from "@mui/material";
 import { FormatItalic, FormatBold, Code, Link } from "@mui/icons-material";
 
 const TextEditorWithTags = ({ text, onTextChange }) => {
@@ -19,13 +19,23 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
   };
 
   return (
-    <Box sx={{ m: 0.5 }}>
-      <Box>
+    <Box sx={{ mt: 1 }}>
+      <Box
+        sx={{
+          m: 0.5,
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "flex-start",
+          alignItems: "center",
+        }}
+      >
         <Button
           variant="contained"
           onClick={() => addTag("i")}
           sx={{
             bgcolor: "#1976d2",
+            border: 1,
+            p: 0.5,
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
             "&:hover": {
@@ -40,6 +50,8 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
           onClick={() => addTag("strong")}
           sx={{
             bgcolor: "#f44336",
+            border: 1,
+            p: 0.5,
             borderTopLeftRadius: 0,
             borderBottomLeftRadius: 0,
             borderTopRightRadius: 0,
@@ -56,6 +68,8 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
           onClick={() => addTag("code")}
           sx={{
             bgcolor: "#4caf50",
+            border: 1,
+            p: 0.5,
             borderTopLeftRadius: 0,
             borderBottomLeftRadius: 0,
             borderTopRightRadius: 0,
@@ -70,9 +84,10 @@ const TextEditorWithTags = ({ text, onTextChange }) => {
         <Button
           variant="contained"
           onClick={() => addTag("a")}
-          
           sx={{
             bgcolor: "#673ab7",
+            border: 1,
+            p: 0.5,
             borderTopLeftRadius: 0,
             borderBottomLeftRadius: 0,
             "&:hover": {

@@ -3,14 +3,16 @@ import { TextField, Button, Box, Typography } from "@mui/material";
 import FileUploadWithPreview from "./FileUploadWithPreview";
 import TextEditorWithTags from "./TextEditorWithTags";
 import { validateXHTML } from "../../utils/xhtmlValidator";
-import { ctx } from "../../store/Context";
-import Captcha from "../Catpcha/Catpcha";
-//import CommentStore from "../../store/CommentStore";
+import { ctx } from "../../stores/Context.js";
+import Captcha from "../Captcha/Captcha.js";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
-const Reply = ({ parentId, onAddReply }) => {
+const Reply = ({ parentId, sortOption, onSubmit }) => {
   const { comment } = useContext(ctx);
   const { user } = useContext(ctx);
   const [replyText, setReplyText] = useState("");
+  const [showPreview, setShowPreview] = useState(true);
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [homePage, setHomePage] = useState("");
@@ -18,8 +20,12 @@ const Reply = ({ parentId, onAddReply }) => {
   const [file, setFile] = useState(null);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false); // Стан CAPTCHA
   const [captchaKey, setCaptchaKey] = useState(Date.now());
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captchaId, setCaptchaId] = useState(null);
 
-  const handleSuccess = () => {
+  const handleSuccess = (id, input) => {
+    setCaptchaInput(input); // Зберігаємо введену відповідь
+    setCaptchaId(id); // Зберігаємо id капчі
     setIsCaptchaVerified(true);
   };
   const refreshCaptcha = () => {
@@ -29,7 +35,6 @@ const Reply = ({ parentId, onAddReply }) => {
 
   const handleFileChange = (uploadedFile) => {
     setFile(uploadedFile);
-    console.log("Received file from child:", uploadedFile);
   };
   const handleTextChange = (newText) => {
     setReplyText(newText);
@@ -37,6 +42,8 @@ const Reply = ({ parentId, onAddReply }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation(); // Це додатково, щоб зупинити поширення події
+
     if (!isCaptchaVerified) {
       setError("CAPTCHA не пройдена.");
       return;
@@ -70,22 +77,18 @@ const Reply = ({ parentId, onAddReply }) => {
       formData.append("parentId", parentId);
     }
     formData.append("text", replyText);
-    formData.append("username", user._isAuth ? user._name : userName);
-    formData.append("email", user._isAuth ? user._user.mail : email);
-    formData.append("homepage", user._isAuth ? user._user.homepage : homePage || "");
+    formData.append("username", user._isAuth ? user._user.name : userName);
+    formData.append("email", user._isAuth ? user._user.email : email);
+    formData.append(
+      "homepage",
+      user._isAuth ? user._user.homepage : homePage || ""
+    );
     formData.append("file", file || null);
-     
-    // Перевірка наявності файлу в formData
-    //console.log("FormData contents:", formData);
-    // Відправка запиту з formData
+    formData.append("captchaId", captchaId);
+    formData.append("captchaInput", captchaInput);
+
     try {
-      const response = await comment.addComment(formData); // Використовуємо метод для відправки
-      console.log("Response from server:", response);
-    } catch (error) {
-      console.error("Error uploading comment:", error);
-    }
-    try {
-      await comment.addComment(formData);
+      await comment.addComment(formData, parentId, sortOption); // Використовуємо метод для відправки
       setReplyText("");
       setUserName("");
       setEmail("");
@@ -93,11 +96,17 @@ const Reply = ({ parentId, onAddReply }) => {
       setFile(null);
       setError("");
       refreshCaptcha();
+      setShowPreview(false);
+      onSubmit();
     } catch (error) {
-      setError("Помилка при відправці коментаря." + error);
+      setError("Error on send comment: " + error);
     }
   };
 
+  const handlePreviewToggle = () => {
+    setShowPreview((prev) => !prev);
+  };
+  const cleanHtml = DOMPurify.sanitize(marked.parse(replyText || ""));
   return (
     <Box
       component="form"
@@ -168,13 +177,53 @@ const Reply = ({ parentId, onAddReply }) => {
           </>
         )}
       </Box>
-      <FileUploadWithPreview onFileUpload={handleFileChange} />
-      {file && (
-        <div>
-          File uploaded: {file instanceof File ? file.name : "Resized image"}
-        </div>
-      )}
+      <Box
+        sx={{
+          mt: 2,
+          m: 0.5,
+          p: 0.5,
+        }}
+      >
+        <FileUploadWithPreview onFileUpload={handleFileChange} />
+        {file && (
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "text.secondary", m: 0.5, p: 0.5 }}
+          >
+            File uploaded: {file instanceof File ? file.name : "Resized image"}
+          </Typography>
+        )}
+      </Box>
+      {showPreview && (
+        <Box
+          sx={{
+            m: 0.5,
+            p: 0.5,
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: "grey.300",
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ color: "text.secondary", m: 0.5, p: 0.5 }}
+          >
+            Preview:
+          </Typography>
 
+          <Box
+            className="prose"
+            sx={{
+              m: 0.5,
+              p: 0.5,
+              "& p": { m: 0 },
+              "& ul": { pl: 3 },
+              "& li": { mb: 0.5 },
+            }}
+            dangerouslySetInnerHTML={{ __html: cleanHtml }}
+          />
+        </Box>
+      )}
       <TextEditorWithTags text={replyText} onTextChange={handleTextChange} />
       <TextField
         sx={{ m: 0.5, mt: 1, display: "flex" }}
@@ -190,6 +239,7 @@ const Reply = ({ parentId, onAddReply }) => {
         value={replyText}
         onChange={(e) => handleTextChange(e.target.value)}
       />
+
       {error && (
         <Typography variant="body2" color="error" sx={{ mt: 2 }}>
           {error}
@@ -202,7 +252,7 @@ const Reply = ({ parentId, onAddReply }) => {
           variant="contained"
           color="primary"
           size="small"
-          sx={{ m: 0.5 }}
+          sx={{ m: 0.5, borderRadius: 0 }}
           disabled={!isCaptchaVerified}
         >
           Comment
