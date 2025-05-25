@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { ctx } from "../store/Context";
+import { ctx } from "../stores/Context";
 import { NavLink, useNavigate } from "react-router-dom";
 import Box from "@mui/material/Box";
 import { Grid } from "@mui/material";
@@ -105,7 +105,7 @@ const Login = observer(() => {
           </Box>
         </CardContent>
         <CardActions sx={{ justifyContent: "flex-end" }}>
-          <Button variant="contained" onClick={logining}>
+          <Button variant="contained" sx={{m:0.5,p:0.5,borderRadius:0}} onClick={logining}>
             Enter
           </Button>
         </CardActions>

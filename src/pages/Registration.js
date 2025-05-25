@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from "react";
 import Cropper from "react-cropper";
 import "cropperjs/src/css/cropper.css";
 import "../styles/cropper-avatar-shaper.css";
-import { ctx } from "../store/Context";
+import { ctx } from "../stores/Context";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import Card from "@mui/material/Card";
@@ -31,6 +31,7 @@ const Registration = observer(() => {
   const history = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [userName, setUserName] = useState("");
   const [homePage, setHomePage] = useState("");
@@ -95,45 +96,50 @@ const Registration = observer(() => {
     e.preventDefault();
     const files = e.dataTransfer ? e.dataTransfer.files : e.target.files;
     if (files && files.length > 0) {
+      const file = files[0];
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        alert("Only JPEG and PNG images are allowed!");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = () => {
         setImage(reader.result); // base64 string
       };
-      reader.readAsDataURL(files[0]);
+      reader.readAsDataURL(file);
     }
   };
 
-  const getCropData = () => {   
+  const getCropData = () => {
     const cropper = cropperRef.current?.cropper;
     if (!cropper) {
       console.error("Cropper is not initialized yet.");
       return;
     }
-  
+
     if (!image) {
       console.error("No image loaded for cropping.");
       return;
     }
-    
+
     const canvas = cropper.getCroppedCanvas({ width: 150, height: 150 });
-    
+
     if (!canvas) {
       console.error("Failed to get cropped canvas.");
       return;
     }
-  
+
     canvas.toBlob((blob) => {
       if (!blob) {
         console.error("Failed to convert canvas to blob.");
         return;
       }
-  
+
       const file = new File([blob], "avatar.png", { type: "image/png" });
       setCropData(file);
       setOpen(false); // Закриваємо діалог після обрізки
     }, "image/png");
   };
-  
 
   const handleOpen = () => {
     setOpen(true);
@@ -174,7 +180,6 @@ const Registration = observer(() => {
   const steps = ["Personal information", "Security data", "Create an account"];
   return (
     <Box
-      container="true"
       sx={{
         display: "flex",
         justifyContent: "center",
@@ -274,7 +279,7 @@ const Registration = observer(() => {
           )}
           {step === 2 && (
             <>
-              <form>
+              <Box component="form">
                 <Stack
                   direction="column"
                   sx={{
@@ -297,15 +302,20 @@ const Registration = observer(() => {
                       fullWidth
                       sx={{ mt: 1 }}
                       size="small"
-                      helperText="Please enter your password"
+                      helperText={
+                        password === ""
+                          ? "Password cannot be empty"
+                          : "Please enter your password"
+                      }
                       id="password"
                       value={password}
-                      error={password === ""}
+                      error={password === "" && passwordTouched} // Помилка тільки після першого введення
                       onChange={(e) => setPassword(e.target.value)}
+                      onBlur={() => setPasswordTouched(true)} // Позначаємо поле як відвідане
                       type="password"
                       label="Password"
                       placeholder="Enter your password..."
-                      autoComplete="new-password" // Додано autoComplete
+                      autoComplete="new-password"
                       required
                     />
                   </Grid>
@@ -331,7 +341,7 @@ const Registration = observer(() => {
                     />
                   </Grid>
                 </Stack>
-              </form>
+              </Box>
             </>
           )}
           {step === 3 && (
@@ -339,7 +349,7 @@ const Registration = observer(() => {
               <Grid
                 sx={{
                   display: "flex",
-                  itemsAlign: "center",
+                  alignItems: "center",
                   justifyContent: "center",
                   mt: 1,
                 }}
@@ -360,6 +370,7 @@ const Registration = observer(() => {
                   variant="contained"
                   component="label"
                   onClick={handleOpen}
+                  sx={{ borderRadius: 0 }}
                 >
                   Select
                 </Button>
@@ -392,7 +403,7 @@ const Registration = observer(() => {
                 </DialogTitle>
                 <DialogContent>
                   <Grid
-                    container="true"
+                    container
                     direction="column"
                     alignItems="center"
                     sx={{
@@ -403,7 +414,11 @@ const Registration = observer(() => {
                     }}
                   >
                     <Grid>
-                      <Button variant="contained" component="label">
+                      <Button
+                        variant="contained"
+                        component="label"
+                        sx={{ m: 0.5, p: 0.5, borderRadius: 0 }}
+                      >
                         Upload
                         <input
                           hidden
@@ -433,10 +448,10 @@ const Registration = observer(() => {
                         checkOrientation={false}
                         onInitialized={(instance) => {
                           console.log(instance);
-                          
+
                           //setCropper(instance);
                         }}
-                        guides={true}                        
+                        guides={true}
                       />
                     </Grid>
                   </Grid>
@@ -476,7 +491,7 @@ const Registration = observer(() => {
                 <>
                   <Button
                     variant="contained"
-                    sx={{ justifyContent: "flex-end" }}
+                    sx={{ m: 0.5, p: 0.5, borderRadius: 0 }}
                     onClick={goPrevStep}
                   >
                     Prev
@@ -485,7 +500,7 @@ const Registration = observer(() => {
               )}
               <Button
                 variant="contained"
-                sx={{ justifyContent: "flex-end" }}
+                sx={{ m: 0.5, p: 0.5, borderRadius: 0 }}
                 onClick={goNextStep}
               >
                 Next
@@ -496,17 +511,17 @@ const Registration = observer(() => {
             <>
               <Button
                 variant="contained"
-                sx={{ justifyContent: "flex-end" }}
+                sx={{ m: 0.5, p: 0.5, borderRadius: 0 }}
                 onClick={goPrevStep}
               >
                 Prev
               </Button>
               <Button
                 variant="contained"
-                sx={{ itemsAlign: "center", justifyContent: "center" }}
+                sx={{ itemsAlign: "center", m: 0.5, p: 0.5, borderRadius: 0 }}
                 onClick={registrate}
               >
-                Create account
+                Create
               </Button>
             </>
           )}
