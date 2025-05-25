@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { BrowserRouter } from 'react-router-dom';
 import { CircularProgress, CssBaseline } from '@mui/material';
-import { ctx } from './store/Context';
+import { ctx } from './stores/Context';
 import AppRouter from './components/AppRouter';
 import NavBar from './components/NavBar';
 import { ThemeProvider } from './styles/theme-context';
