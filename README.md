@@ -9,7 +9,7 @@ Here’s the structure focusing only on **Frontend Features**:
 | Routing (React Router)                | Completed          |
 | Authentication (Login, Registration)  | Completed          |
 | User Profile (Display, Edit)          | Completed          |
-| File Upload (Avatar, etc.)            | 70% Done           |
+| File Upload (Avatar, etc.)            | Completed          |
 | State Management (MobX)               | Completed          |
 | Forms (Validation, User Inputs)       | Completed          |
 | API Integration (Fetching Data)       | Completed          |
